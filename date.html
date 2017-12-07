@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style type="text/css">
+    .table {
+        border-left: solid 1px #ccc;
+        border-top: solid 1px #ccc;
+    }
+
+    .table th,
+    .table td {
+        border-right: solid 1px #ccc;
+        border-bottom: solid 1px #ccc;
+        padding: 5px 10px;
+    }
+
+    .table thead {
+        background: #e1e1e1;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #f3f3f3;
+    }
+    .table td{
+    	cursor: pointer;
+    }
+    .nowdate{
+    	background: red;
+    	color: white;
+    }
+    .active{
+    	background: black;
+    	color: white;
+    }
+    </style>
+</head>
+
+<body>
+    <div style="margin-bottom: 20px">
+        <select id="year"></select>
+        <select id="month"></select>
+        <button class="prevm">上一月</button>
+        <button class="nextm">下一月</button>
+        <button class="prevy">上一年</button>
+        <button class="nexty">下一年</button>
+        <span id="today"></span>
+    </div>
+    <table border="0" cellpadding="0" cellspacing="0" class="table">
+        <thead>
+            <tr>
+                <th>周一</th>
+                <th>周二</th>
+                <th>周三</th>
+                <th>周四</th>
+                <th>周五</th>
+                <th>周六</th>
+                <th>周日</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.2.1/jquery.js"></script>
+    <script type="text/javascript">
+    // 每月天数变量
+    var monthDays;
+    // 获取当前日期
+    var date = new Date()
+    var nowFullYear = date.getFullYear();
+    var nowMonth = date.getMonth() + 1;
+    var nowDate = date.getDate();
+
+    jQuery.extend({
+    	// 设置每月天数
+    	setMonthDays: function (year) {
+    		if(year) {
+	    		return [31, 28 + is_loop(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+	    	} else {
+	    		return [31, 28 + is_loop($('#year').val()), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+	    	}
+    	},
+    	// 设置日历
+    	setDays: function () {
+    		// 该月1号周几
+	    	var fristDayWeek = new Date($('#year').val() + '-' + $('#month').val() + '-' + 1).getDay();
+	    	// 给月天数
+	    	var selfMonthDay = monthDays[$('#month').val() - 1];
+	    	var tdLength = selfMonthDay + fristDayWeek - 1
+	    	// 计算tr数量
+	    	var trLength = tdLength / 7;
+	    	var tbodyStr = ''
+	    	var k = 0;
+	    	for (var i = 0; i < trLength; i++) {
+	    		tbodyStr+='<tr>'
+	    		for(var j=0; j<7; j++){
+	    			if(i == 0) {
+	    				if (j<(fristDayWeek - 1)){
+	    					tbodyStr += '<td></td>'
+	    				} else {
+	    					k++
+	    					if(k == nowDate && $('#year').val() == nowFullYear && $('#month').val() == nowMonth) {
+		    					tbodyStr += '<td class="nowdate">'+k+'</td>'	
+		    				} else {
+		    					tbodyStr += '<td>'+k+'</td>'
+		    				}
+	    				}
+	    			} else {
+	    				k++
+	    				if(k<=selfMonthDay){
+	    					if(k == nowDate && $('#year').val() == nowFullYear && $('#month').val() == nowMonth) {
+		    					tbodyStr += '<td class="nowdate">'+k+'</td>'	
+		    				} else {
+		    					tbodyStr += '<td>'+k+'</td>'
+		    				}
+	    				}else {
+	    					tbodyStr += '<td></td>'
+	    				}
+	    			}
+	    		}
+	    		tbodyStr+='</tr>'
+	    	}
+	    	$('.table tbody').html(tbodyStr)
+    	}
+    })
+
+    // 计算平年，闰年
+    function is_loop(year) {
+        return year % 400 == 0 ? 1 : year % 4 == 0 ? 1 : 0;
+    }
+
+    // 内置月份 年份
+    var years = [];
+    var months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    var yearsOptionStr = '';
+    var monthsOptionStr = ''
+    for (var i = 1900; i <= 2050; i++) {
+        years.push(i)
+    }
+
+    //设置下拉选框内容 年
+    $.each(years, function(i, v) {
+        yearsOptionStr += '<option>' + v + '</option>'
+    });
+    //设置下拉选框内容 月
+    $.each(months, function(i, v) {
+        monthsOptionStr += '<option>' + v + '</option>'
+    });
+
+    $('#year').html(yearsOptionStr);
+    $('#month').html(monthsOptionStr);
+    monthDays = $.setMonthDays(nowFullYear);
+    $('#year').on('change', function() {
+        monthDays = $.setMonthDays();
+        $.setDays();
+    })
+
+    $('#month').on('change', function() {
+        monthDays = $.setMonthDays();
+        $.setDays();
+    })
+
+    // 获取该月日历
+    $('#year').val(nowFullYear);
+    $('#month').val(nowMonth);
+    $.setDays();
+    $('.table tbody').delegate('td', 'click', function (){
+    	$(this).addClass('active').siblings().removeClass('active').parent().siblings().find('td').removeClass('active');
+    	$('#today').html('选择了:'+$('#year').val()+'年'+$('#month').val()+'月'+$(this).text())
+    })
+
+    $('.prevm').on('click', function () {
+    	if($('#month').val()>1){
+    		$('#month').val($('#month').val() - 1);
+    	} else {
+            $('#month').val(12);
+            $('#year').val(parseInt($('#year').val()) - 1);
+        }
+        monthDays = $.setMonthDays();
+        $.setDays();
+    })
+    $('.nextm').on('click', function () {
+    	if($('#month').val() < 12) {
+    		$('#month').val(parseInt($('#month').val()) + 1);
+    	} else {
+            $('#month').val(1);
+            $('#year').val(parseInt($('#year').val()) + 1);
+        }
+        monthDays = $.setMonthDays();
+        $.setDays();
+    })
+    $('.prevy').on('click', function () {
+		$('#year').val($('#year').val() - 1);
+		monthDays = $.setMonthDays();
+    	$.setDays();
+    })
+    $('.nexty').on('click', function () {
+		$('#year').val(parseInt($('#year').val()) + 1);
+		monthDays = $.setMonthDays();
+		$.setDays();
+    })
+    </script>
+</body>
+
+</html>
